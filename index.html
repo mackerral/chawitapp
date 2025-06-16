@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangPrint - Dual Subtitle Browser Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .hero {
+            padding: 120px 0 80px;
+            color: white;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text {
+            text-align: left;
+        }
+
+        .hero-mockup {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mockup-slider-container {
+            position: relative;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .mockup-slider-wrapper {
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .mockup-slider-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .mockup-slide {
+            min-width: 100%;
+            max-width: 100%;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+
+        .mockup-slide .browser-mockup {
+            width: 100%;
+        }
+
+        .mockup-slide .video-container {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .mockup-slide .video-background {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .mockup-slide .video-background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .mockup-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .mockup-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 18px;
+        }
+
+        .mockup-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mockup-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mockup-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        .mockup-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .browser-mockup {
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .browser-header {
+            background: #2c2c2c;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        .browser-dots {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27ca3f; }
+
+        .url-bar {
+            flex: 1;
+            background: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: #ccc;
+            font-size: 12px;
+            margin-left: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+        }
+
+        .video-background {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+        }
+
+        .video-placeholder {
+            color: #666;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 40px 30px 25px;
+        }
+
+        .subtitle-line {
+            margin: 4px 0;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .chinese-subtitle {
+            color: #ffd700;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 2px;
+        }
+
+        .pinyin-subtitle {
+            color: #90EE90;
+            font-size: 14px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            margin-bottom: -5px;
+        }
+
+        .english-subtitle {
+            color: #ffffff;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .platform-logo {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .iqiyi-logo { color: #00d4aa; }
+        .netflix-logo { color: #e50914; }
+        .youtube-logo { color: #ff0000; }
+
+        .extension-indicator {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid #00d4aa;
+            color: #00d4aa;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .vocab-container {
+            background: #1a1a1a;
+            min-height: 200px;
+        }
+
+        .vocab-header {
+            background: #2c2c2c;
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+        }
+
+        .vocab-content {
+            padding: 20px;
+        }
+
+        .vocab-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .vocab-word {
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .hsk-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .hsk-1 { background: #4CAF50; }
+        .hsk-2 { background: #2196F3; }
+        .hsk-3 { background: #FF9800; }
+
+        .vocab-pinyin {
+            color: #90EE90;
+            font-style: italic;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .vocab-definition {
+            color: #ccc;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 35px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .features {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .about {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .about h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
+
+        .about p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+            line-height: 1.8;
+        }
+
+        .newsletter {
+            padding: 60px 0;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+        }
+
+        .newsletter h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .newsletter p {
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .newsletter-form {
+            display: flex;
+            max-width: 400px;
+            margin: 0 auto;
+            gap: 10px;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+        }
+
+        .newsletter-form button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .newsletter-form button:hover {
+            background: #5a6fd8;
+        }
+
+        footer {
+            padding: 40px 0;
+            background: #1a252f;
+            color: white;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-text {
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .mockup-container {
+                padding: 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .slider-item {
+                padding: 40px 20px;
+            }
+
+            .slider-item h3 {
+                font-size: 1.5rem;
+            }
+
+            .slider-item p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">ChawitApp</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <div class="status-badge">🚀 Currently in Development</div>
+                        <h1>LangPrint</h1>
+                        <p>Browser extension for dual subtitles with pinyin support. Perfect for Chinese language learners who want to enhance their viewing experience with vocabulary breakdown and HSK level tagging.</p>
+                        <a href="#features" class="cta-button">Learn More</a>
+                    </div>
+                    <div class="hero-mockup">
+                        <div class="mockup-slider-container">
+                            <div class="mockup-container">
+                                <div class="mockup-slider-wrapper">
+                                    <div class="mockup-slider-track" id="mockupSliderTrack">
+                                        <!-- Slide 1: iQIYI Demo -->
+                                        <div class="mockup-slide">
+                                            <div class="browser-mockup">
+                                                <div class="browser-header">
+                                                    <div class="browser-dots dot-red"></div>
+                                                    <div class="browser-dots dot-yellow"></div>
+                                                    <div class="browser-dots dot-green"></div>
+                                                    <input class="url-bar" value="iqiyi.com/watch/video" readonly>
+                                                </div>
+                                                <div class="video-container">
+                                                    <div class="video-background">
+                                                        <img src="iqiyi.png" alt="Netflix LangPrint Demo" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </div>
+                                                    <div class="subtitle-overlay">
+                                                        <div class="subtitle-line pinyin-subtitle">
+                                                            zhōng wén xué xí hěn yǒu qù
+                                                        </div>
+                                                        <div class="subtitle-line chinese-subtitle">
+                                                            中文学习很有趣
+                                                        </div>
+                                                        <div class="subtitle-line english-subtitle">
+                                                            Learning Chinese is very interesting
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="extension-indicator">
+                                                    🔧 LangPrint Extension Active - Pro: Print & Export Available
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Slide 2: Netflix Demo -->
+                                        <div class="mockup-slide">
+                                            <div class="browser-mockup">
+                                                <div class="browser-header">
+                                                    <div class="browser-dots dot-red"></div>
+                                                    <div class="browser-dots dot-yellow"></div>
+                                                    <div class="browser-dots dot-green"></div>
+                                                    <input class="url-bar" value="netflix.com/watch/12345" readonly>
+                                                </div>
+                                                <div class="video-container">
+                                                    <div class="video-background">
+                                                        <img src="printshow.png" alt="Netflix LangPrint Demo" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </div>
+                                                  
+                                                    
+                                                </div>
+                                                <div class="extension-indicator">
+                                                    🔧 LangPrint Extension Active - Vocabulary Learning Mode
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Slide 3: YouTube Demo -->
+                                        <div class="mockup-slide">
+                                            <div class="browser-mockup">
+                                                <div class="browser-header">
+                                                    <div class="browser-dots dot-red"></div>
+                                                    <div class="browser-dots dot-yellow"></div>
+                                                    <div class="browser-dots dot-green"></div>
+                                                    <input class="url-bar" value="youtube.com/watch?v=example" readonly>
+                                                </div>
+                                                <div class="video-container">
+                                                    <div class="video-background">
+                                                        <img src="printshow3.png" alt="YouTube LangPrint Demo" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </div>
+                                                                                                     
+                                                    
+                                                   
+                                                </div>
+                                                <div class="extension-indicator">
+                                                    🔧 LangPrint Extension Active - HSK Level Tracking
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mockup-controls">
+                                <button class="mockup-btn" id="mockupPrevBtn">‹</button>
+                                <div class="mockup-dots">
+                                    <div class="mockup-dot active"></div>
+                                    <div class="mockup-dot"></div>
+                                    <div class="mockup-dot"></div>
+                                </div>
+                                <button class="mockup-btn" id="mockupNextBtn">›</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2>Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📺</div>
+                        <h3>Dual Subtitles</h3>
+                        <p>Display both original and translated subtitles simultaneously for better comprehension and learning.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔤</div>
+                        <h3>Pinyin Support</h3>
+                        <p>Show pinyin pronunciation alongside Chinese characters to help with reading and pronunciation.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🖨️</div>
+                        <h3>Print Subtitles (Pro)</h3>
+                        <p>Pro members can print dual subtitles for offline study and reference materials.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Vocabulary Breakdown</h3>
+                        <p>Get detailed vocabulary analysis for each episode with word definitions and usage examples.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏷️</div>
+                        <h3>HSK Level Tags</h3>
+                        <p>Words are tagged with their corresponding HSK levels to track your learning progress.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h3>Browser Extension</h3>
+                        <p>Works seamlessly with your favorite streaming platforms as a lightweight browser extension.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about">
+            <div class="container">
+                <h2>About LangPrint</h2>
+                <p>LangPrint is designed specifically for Chinese language learners who want to maximize their learning while watching videos. Our browser extension transforms your viewing experience by providing dual subtitles with pinyin support, making it easier to connect spoken Chinese with written characters. Pro members can take their learning further with printable subtitle sheets and comprehensive vocabulary breakdowns, complete with HSK level indicators to track learning progress.</p>
+            </div>
+        </section>
+
+
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <p>&copy; 2025 LangPrint. All rights reserved.</p>
+            <p>Contact: mackerral@gmail.com</p>
+        </div>
+    </footer>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mockup slider functionality
+            let currentMockupSlide = 0;
+            const mockupSlides = document.querySelectorAll('.mockup-slide');
+            const totalMockupSlides = mockupSlides.length;
+            const mockupSliderTrack = document.getElementById('mockupSliderTrack');
+            const mockupDots = document.querySelectorAll('.mockup-dot');
+            const mockupPrevBtn = document.getElementById('mockupPrevBtn');
+            const mockupNextBtn = document.getElementById('mockupNextBtn');
+
+            function updateMockupSlider() {
+                if (mockupSliderTrack) {
+                    const translateX = -currentMockupSlide * 100;
+                    mockupSliderTrack.style.transform = `translateX(${translateX}%)`;
+                    
+                    // Update dots
+                    mockupDots.forEach((dot, index) => {
+                        dot.classList.toggle('active', index === currentMockupSlide);
+                    });
+                }
+            }
+
+            function nextMockupSlide() {
+                currentMockupSlide = (currentMockupSlide + 1) % totalMockupSlides;
+                updateMockupSlider();
+            }
+
+            function prevMockupSlide() {
+                currentMockupSlide = (currentMockupSlide - 1 + totalMockupSlides) % totalMockupSlides;
+                updateMockupSlider();
+            }
+
+            function goToMockupSlide(slideIndex) {
+                currentMockupSlide = slideIndex;
+                updateMockupSlider();
+            }
+
+            // Event listeners for mockup slider (with null checks)
+            if (mockupNextBtn) {
+                mockupNextBtn.addEventListener('click', nextMockupSlide);
+            }
+            
+            if (mockupPrevBtn) {
+                mockupPrevBtn.addEventListener('click', prevMockupSlide);
+            }
+
+            mockupDots.forEach((dot, index) => {
+                dot.addEventListener('click', () => goToMockupSlide(index));
+            });
+
+            // Auto-advance mockup slider every 4 seconds
+            if (totalMockupSlides > 0) {
+                setInterval(nextMockupSlide, 4000);
+            }
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
